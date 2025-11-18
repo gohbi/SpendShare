@@ -1,34 +1,37 @@
 # Docker Compose configuration for SpendShare
-# This file provides a complete development environment
+# Optimized for faster startup and development
 
 services:
-  # API Gateway
-  api-gateway:
-    image: kong:3.4-alpine
-    container_name: spendshare-api-gateway
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
-      KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_LISTEN: 0.0.0.0:8001
-    ports:
-      - "8000:8000"  # Proxy
-      - "8443:8443"  # Proxy SSL
-      - "8001:8001"  # Admin API
-    volumes:
-      - ./infrastructure/docker/kong:/kong/declarative
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - spendshare-network
+  # API Gateway (Optional - enable when needed)
+  # Uncomment when backend services are implemented
+  # api-gateway:
+  #   image: kong:latest
+  #   container_name: spendshare-api-gateway
+  #   environment:
+  #     KONG_DATABASE: "off"
+  #     KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+  #     KONG_PROXY_ACCESS_LOG: /dev/stdout
+  #     KONG_ADMIN_ACCESS_LOG: /dev/stdout
+  #     KONG_PROXY_ERROR_LOG: /dev/stderr
+  #     KONG_ADMIN_ERROR_LOG: /dev/stderr
+  #     KONG_ADMIN_LISTEN: 0.0.0.0:8001
+  #   ports:
+  #     - "8000:8000"  # Proxy
+  #     - "8443:8443"  # Proxy SSL
+  #     - "8001:8001"  # Admin API
+  #   volumes:
+  #     - ./infrastructure/docker/kong:/kong/declarative
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - spendshare-network
 
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: spendshare-postgres
     environment:
       POSTGRES_DB: spendshare
@@ -42,32 +45,34 @@ services:
       - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U spendshare"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
       retries: 5
+      start_period: 10s
     networks:
       - spendshare-network
 
-  # MongoDB for Chat
-  mongodb:
-    image: mongo:6-jammy
-    container_name: spendshare-mongodb
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-spendshare}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-spendshare_dev_password}
-      MONGO_INITDB_DATABASE: spendshare_chat
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-      - mongo-config:/data/configdb
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - spendshare-network
+  # MongoDB for Chat (Optional - enable when chat service is implemented)
+  # mongodb:
+  #   image: mongo:7-jammy
+  #   container_name: spendshare-mongodb
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-spendshare}
+  #     MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-spendshare_dev_password}
+  #     MONGO_INITDB_DATABASE: spendshare_chat
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo-data:/data/db
+  #     - mongo-config:/data/configdb
+  #   healthcheck:
+  #     test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 20s
+  #   networks:
+  #     - spendshare-network
 
   # Redis for Cache and Sessions
   redis:
@@ -79,10 +84,11 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-spendshare_dev_password}", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
+      start_period: 5s
     networks:
       - spendshare-network
 
@@ -100,10 +106,11 @@ services:
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     networks:
       - spendshare-network
 
@@ -145,6 +152,12 @@ services:
     ports:
       - "1025:1025" # SMTP
       - "8025:8025" # Web UI
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     networks:
       - spendshare-network
 
@@ -280,10 +293,10 @@ services:
 volumes:
   postgres-data:
     driver: local
-  mongo-data:
-    driver: local
-  mongo-config:
-    driver: local
+  # mongo-data:
+  #   driver: local
+  # mongo-config:
+  #   driver: local
   redis-data:
     driver: local
   minio-data:
