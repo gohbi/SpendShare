@@ -1,8 +1,6 @@
 # Docker Compose configuration for SpendShare
 # This file provides a complete development environment
 
-version: '3.8'
-
 services:
   # API Gateway
   api-gateway:
