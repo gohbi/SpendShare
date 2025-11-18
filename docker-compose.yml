@@ -4,7 +4,7 @@
 services:
   # API Gateway
   api-gateway:
-    image: kong:3.4-alpine
+    image: kong:3.5
     container_name: spendshare-api-gateway
     environment:
       KONG_DATABASE: "off"
