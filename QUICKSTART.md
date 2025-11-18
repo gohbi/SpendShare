@@ -13,6 +13,8 @@ That's it! Docker will handle the rest.
 
 ## Quick Start with Docker (Recommended)
 
+**✨ Docker setup optimized for fast startup!** Only essential services are enabled by default, reducing startup time from 2+ minutes to ~10-15 seconds.
+
 ### 1. Clone the Repository
 
 ```bash
@@ -33,33 +35,55 @@ cp .env.example .env
 ### 3. Start the Services
 
 ```bash
-# Start all infrastructure services
-docker-compose up -d
+# Start all infrastructure services (optimized for fast startup)
+docker compose up -d
 
-# Wait for services to be ready (about 30 seconds)
-docker-compose ps
+# Wait for services to be ready (about 10-15 seconds)
+docker compose ps
+
+# All services should show "healthy" status
 ```
+
+**Note:** The Docker setup has been optimized for faster startup. Only essential services (PostgreSQL, Redis, MinIO, MailHog) start by default. MongoDB and Kong API Gateway are commented out - enable them in `docker-compose.yml` when needed.
 
 ### 4. Access the Services
 
-Once everything is running:
+Once everything is running (all services show "healthy" status):
 
 - **MailHog** (Email testing): http://localhost:8025
 - **MinIO Console** (File storage): http://localhost:9001
   - Username: `minioadmin`
   - Password: `minioadmin`
 - **PostgreSQL**: `localhost:5432`
-- **MongoDB**: `localhost:27017`
+  - Database: `spendshare`
+  - User: `spendshare`
+  - Password: `spendshare_dev_password`
 - **Redis**: `localhost:6379`
+  - Password: `spendshare_dev_password`
+
+**Optional Services** (commented out by default):
+- **MongoDB**: `localhost:27017` (enable when chat service is ready)
+- **Kong API Gateway**: `localhost:8000` (enable when backend services are ready)
 
 ### 5. Stop the Services
 
 ```bash
 # Stop all services
-docker-compose down
+docker compose down
 
 # Stop and remove all data
-docker-compose down -v
+docker compose down -v
+```
+
+### Alternative: Minimal Setup
+
+For the absolute fastest startup with only PostgreSQL and Redis:
+
+```bash
+# Use minimal configuration
+docker compose -f docker-compose.minimal.yml up -d
+
+# This starts in ~5 seconds with only essential services
 ```
 
 ## Development Setup (For Contributors)
@@ -76,7 +100,10 @@ If you want to contribute to SpendShare or run services locally:
 
 ```bash
 # Start only the infrastructure services (databases, cache, etc.)
-docker-compose up -d postgres mongodb redis minio mailhog
+docker compose up -d postgres redis minio mailhog
+
+# Or use minimal setup (fastest)
+docker compose -f docker-compose.minimal.yml up -d
 ```
 
 ### 2. Set Up Backend Service

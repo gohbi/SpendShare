@@ -1,0 +1,15 @@
+_format_version: "3.0"
+
+# Kong Declarative Configuration for SpendShare
+# This is a minimal configuration for development
+
+services: []
+
+# Future service routes will be added here as services are implemented
+# Example:
+# - name: auth-service
+#   url: http://auth-service:3001
+#   routes:
+#   - name: auth-route
+#     paths:
+#     - /api/auth

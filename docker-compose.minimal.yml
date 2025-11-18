@@ -1,0 +1,55 @@
+# Minimal Docker Compose for SpendShare
+# This configuration includes only the absolute essentials for development
+# Use this if you want the fastest possible startup
+
+services:
+  # PostgreSQL Database (Essential)
+  postgres:
+    image: postgres:16-alpine
+    container_name: spendshare-postgres
+    environment:
+      POSTGRES_DB: spendshare
+      POSTGRES_USER: spendshare
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-spendshare_dev_password}
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spendshare"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - spendshare-network
+
+  # Redis for Cache and Sessions (Essential)
+  redis:
+    image: redis:7-alpine
+    container_name: spendshare-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-spendshare_dev_password}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-spendshare_dev_password}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - spendshare-network
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  spendshare-network:
+    driver: bridge

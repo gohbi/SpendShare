@@ -86,19 +86,28 @@ For detailed architecture information, see [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ### Using Docker Compose (Recommended)
 
-The easiest way to run SpendShare is using Docker Compose:
+The easiest way to run SpendShare is using Docker Compose. **The setup has been optimized for fast startup** (~10-15 seconds):
 
 ```bash
 # Clone the repository
 git clone https://github.com/gohbi/SpendShare.git
 cd SpendShare
 
-# Start all services
-docker-compose up -d
+# Start all services (optimized - only essential services enabled)
+docker compose up -d
 
 # Access the application
 open http://localhost:3000
 ```
+
+**What's included:**
+- ✅ PostgreSQL (database)
+- ✅ Redis (cache/sessions) 
+- ✅ MinIO (file storage)
+- ✅ MailHog (email testing)
+- 💡 MongoDB & Kong (commented out - enable when needed)
+
+For more details, see [infrastructure/docker/README.md](./infrastructure/docker/README.md)
 
 ### Manual Setup
 
